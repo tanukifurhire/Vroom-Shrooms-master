@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using Cinemachine;
 
 [RequireComponent(typeof(PlayerInput))]
 public class Car_Controller : MonoBehaviour
@@ -14,6 +16,8 @@ public class Car_Controller : MonoBehaviour
     [SerializeField] private Rigidbody rb;
     [SerializeField] private Transform groundTrigger;
     [SerializeField] private LayerMask wheelCollidables;
+    private CinemachineComponentBase componentBase;
+    [SerializeField] private CinemachineVirtualCamera virtualCamera;
 
     [Header("Specs")]
     [SerializeField] private float wheelBase;
@@ -35,10 +39,12 @@ public class Car_Controller : MonoBehaviour
     private float ackermannAngleRight;
     private float flDampedTargetRotationCurrentVelocity;
     private float frDampedTargetRotationCurrentVelocity;
+    private bool drift = false;
 
     private void Awake()
     {
         Input = GetComponent<PlayerInput>();
+        componentBase = virtualCamera.GetCinemachineComponent(CinemachineCore.Stage.Body);
     }
     // Start is called before the first frame update
     void Start()
@@ -50,6 +56,22 @@ public class Car_Controller : MonoBehaviour
     void Update()
     {
         ReadMovementInput();
+        if (Input.PlayerActions.Drift.WasPressedThisFrame())
+        {
+            drift = true;
+            if (componentBase is CinemachineTransposer)
+            {
+                (componentBase as CinemachineTransposer).m_YawDamping = 2.25f;
+            }
+        }
+        if (Input.PlayerActions.Drift.WasReleasedThisFrame())
+        {
+            drift = false;
+            if (componentBase is CinemachineTransposer)
+            {
+                (componentBase as CinemachineTransposer).m_YawDamping = .75f;
+            }
+        }
         CalculateAckermannAngle();
         AddSteerAngleToWheel();
     }
@@ -61,6 +83,11 @@ public class Car_Controller : MonoBehaviour
         MoveCar();
     }
     #region Main Methods
+    void Grip()
+    {
+        var locVel = transform.InverseTransformDirection(rb.velocity);
+        rb.velocity -= transform.right * locVel.x;
+    }
     void MoveCar()
     {
         if (!WheelsGrounded())
@@ -69,9 +96,13 @@ public class Car_Controller : MonoBehaviour
         }
 
         rb.AddForce(rb.transform.forward.normalized * GetDriveForce());
-        if (rb.velocity.magnitude >= 1f)
+        if (rb.velocity.magnitude >= 2.5f)
         {
             rb.angularVelocity += -transform.up * GetSteeringAngularAcceleration() * Time.fixedDeltaTime;
+            if (!drift)
+            {
+                Grip();
+            }
         }
     }
     float GetSteeringAngularAcceleration()
@@ -124,8 +155,6 @@ public class Car_Controller : MonoBehaviour
         steerInput = new Vector2(Input.PlayerActions.WASD.ReadValue<Vector2>().x, Input.PlayerActions.WASD.ReadValue<Vector2>().y);
 
         smoothedInput = Vector2.SmoothDamp(smoothedInput, steerInput, ref smoothInputVelocity, smoothInputSpeed * Time.deltaTime);
-
-        Debug.Log(steerInput.y);
     }
     #endregion
 }

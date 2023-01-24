@@ -27,13 +27,19 @@ public class Car_Gravity : MonoBehaviour
         {
             direction = -transform.up.normalized;
         }
+        else if (car.WheelsGrounded() || Vector3.Angle(Vector3.down, -transform.up.normalized) > maxAngle)
+        {
+            direction = Vector3.down;
+        }
         else
         {
             direction = Vector3.down;
         }
-        rb.AddForceAtPosition(direction * (acceleration * 1f) * Time.fixedDeltaTime, flWheel.position, ForceMode.VelocityChange);
-        rb.AddForceAtPosition(direction * (acceleration * 1f) * Time.fixedDeltaTime, frWheel.position, ForceMode.VelocityChange);
-        rb.AddForceAtPosition(direction * (acceleration * 1f) * Time.fixedDeltaTime, rlWheel.position, ForceMode.VelocityChange);
-        rb.AddForceAtPosition(direction * (acceleration * 1f) * Time.fixedDeltaTime, rrWheel.position, ForceMode.VelocityChange);
+        
+        rb.AddForceAtPosition(direction * acceleration * Time.fixedDeltaTime, flWheel.position, ForceMode.VelocityChange);
+        rb.AddForceAtPosition(direction * acceleration * Time.fixedDeltaTime, frWheel.position, ForceMode.VelocityChange);
+        rb.AddForceAtPosition(direction * acceleration * Time.fixedDeltaTime, rlWheel.position, ForceMode.VelocityChange);
+        rb.AddForceAtPosition(direction * acceleration * Time.fixedDeltaTime, rrWheel.position, ForceMode.VelocityChange);
+        
     }
 }

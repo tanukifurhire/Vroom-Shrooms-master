@@ -35,6 +35,15 @@ public partial class @PlayerInputActions : IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""Drift"",
+                    ""type"": ""Button"",
+                    ""id"": ""7b4d728d-40c0-4df4-bf8a-5495c6b4d9f1"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -92,6 +101,17 @@ public partial class @PlayerInputActions : IInputActionCollection2, IDisposable
                     ""action"": ""WASD"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""2e646e27-13db-472d-82b1-71a774056664"",
+                    ""path"": ""<Keyboard>/shift"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Drift"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -101,6 +121,7 @@ public partial class @PlayerInputActions : IInputActionCollection2, IDisposable
         // Player
         m_Player = asset.FindActionMap("Player", throwIfNotFound: true);
         m_Player_WASD = m_Player.FindAction("WASD", throwIfNotFound: true);
+        m_Player_Drift = m_Player.FindAction("Drift", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -161,11 +182,13 @@ public partial class @PlayerInputActions : IInputActionCollection2, IDisposable
     private readonly InputActionMap m_Player;
     private IPlayerActions m_PlayerActionsCallbackInterface;
     private readonly InputAction m_Player_WASD;
+    private readonly InputAction m_Player_Drift;
     public struct PlayerActions
     {
         private @PlayerInputActions m_Wrapper;
         public PlayerActions(@PlayerInputActions wrapper) { m_Wrapper = wrapper; }
         public InputAction @WASD => m_Wrapper.m_Player_WASD;
+        public InputAction @Drift => m_Wrapper.m_Player_Drift;
         public InputActionMap Get() { return m_Wrapper.m_Player; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -178,6 +201,9 @@ public partial class @PlayerInputActions : IInputActionCollection2, IDisposable
                 @WASD.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnWASD;
                 @WASD.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnWASD;
                 @WASD.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnWASD;
+                @Drift.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnDrift;
+                @Drift.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnDrift;
+                @Drift.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnDrift;
             }
             m_Wrapper.m_PlayerActionsCallbackInterface = instance;
             if (instance != null)
@@ -185,6 +211,9 @@ public partial class @PlayerInputActions : IInputActionCollection2, IDisposable
                 @WASD.started += instance.OnWASD;
                 @WASD.performed += instance.OnWASD;
                 @WASD.canceled += instance.OnWASD;
+                @Drift.started += instance.OnDrift;
+                @Drift.performed += instance.OnDrift;
+                @Drift.canceled += instance.OnDrift;
             }
         }
     }
@@ -192,5 +221,6 @@ public partial class @PlayerInputActions : IInputActionCollection2, IDisposable
     public interface IPlayerActions
     {
         void OnWASD(InputAction.CallbackContext context);
+        void OnDrift(InputAction.CallbackContext context);
     }
 }

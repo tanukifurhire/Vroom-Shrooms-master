@@ -47,6 +47,10 @@ public class Car_Suspension : MonoBehaviour
     {
         Vector3 supportForce = GetWheelSupportForce(wheel, lastDistance);
         rb.AddForceAtPosition(supportForce, wheel.position);
+        if (supportForce.y > 35000f && rb.velocity.y < -9f)
+        {
+            rb.AddForce(rb.transform.forward.normalized * 2000, ForceMode.Impulse);
+        }
         Debug.DrawRay(wheel.position, supportForce);
     }
 
@@ -64,6 +68,10 @@ public class Car_Suspension : MonoBehaviour
         float rayLength = maxDistance - minDistance;
         Vector3 rayOrigin = (wheel.position - GetUpDir() * verticalOffset) - GetUpDir() * minDistance;
         bool hasHit = Physics.Raycast(rayOrigin, -GetUpDir(), out hit, rayLength, roadLayer);
+        if (hasHit)
+        {
+            wheel.GetChild(0).transform.position = hit.point + (transform.up.normalized / 2);
+        }
         float distanceFromRest = hasHit ? hit.distance + minDistance : 0;
         return distanceFromRest;
     }
