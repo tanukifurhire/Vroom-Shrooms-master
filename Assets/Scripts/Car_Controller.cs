@@ -7,6 +7,7 @@ using Cinemachine;
 [RequireComponent(typeof(PlayerInput))]
 public class Car_Controller : MonoBehaviour
 {
+    [Header("References")]
     [SerializeField] private Transform flWheel;
     private float flWheelSteerAngle;
     [SerializeField] private Transform frWheel;
@@ -18,6 +19,7 @@ public class Car_Controller : MonoBehaviour
     [SerializeField] private LayerMask wheelCollidables;
     private CinemachineComponentBase componentBase;
     [SerializeField] private CinemachineVirtualCamera virtualCamera;
+    public Car_Suspension CarSuspension { get; private set; }
 
     [Header("Specs")]
     [SerializeField] private float wheelBase;
@@ -45,6 +47,7 @@ public class Car_Controller : MonoBehaviour
     {
         Input = GetComponent<PlayerInput>();
         componentBase = virtualCamera.GetCinemachineComponent(CinemachineCore.Stage.Body);
+        CarSuspension = GetComponent<Car_Suspension>();
     }
     // Start is called before the first frame update
     void Start()
@@ -56,22 +59,7 @@ public class Car_Controller : MonoBehaviour
     void Update()
     {
         ReadMovementInput();
-        if (Input.PlayerActions.Drift.WasPressedThisFrame())
-        {
-            drift = true;
-            if (componentBase is CinemachineTransposer)
-            {
-                (componentBase as CinemachineTransposer).m_YawDamping = 2.25f;
-            }
-        }
-        if (Input.PlayerActions.Drift.WasReleasedThisFrame())
-        {
-            drift = false;
-            if (componentBase is CinemachineTransposer)
-            {
-                (componentBase as CinemachineTransposer).m_YawDamping = .75f;
-            }
-        }
+        Drift();
         CalculateAckermannAngle();
         AddSteerAngleToWheel();
     }
@@ -88,14 +76,39 @@ public class Car_Controller : MonoBehaviour
         var locVel = transform.InverseTransformDirection(rb.velocity);
         rb.velocity -= transform.right * locVel.x;
     }
+    void Drift()
+    {
+        if (Input.PlayerActions.Drift.WasPressedThisFrame())
+        {
+            drift = true;
+            if (componentBase is CinemachineTransposer)
+            {
+                (componentBase as CinemachineTransposer).m_YawDamping = 2.25f;
+            }
+            rb.AddForceAtPosition(5000f * transform.right * -steerInput.x, rlWheel.position);
+            rb.AddForceAtPosition(5000f * transform.right * -steerInput.x, rrWheel.position);
+            driveForce += 2000f;
+        }
+        if (Input.PlayerActions.Drift.WasReleasedThisFrame())
+        {
+            drift = false;
+            if (componentBase is CinemachineTransposer)
+            {
+                (componentBase as CinemachineTransposer).m_YawDamping = .75f;
+            }
+            driveForce -= 2000f;
+        }
+    }
     void MoveCar()
     {
-        if (!WheelsGrounded())
+        if (WheelGroundedCheck(rlWheel))
         {
-            return;
+            rb.AddForceAtPosition((transform.forward.normalized * GetDriveForce()) / 2, rlWheel.position);
         }
-
-        rb.AddForce(rb.transform.forward.normalized * GetDriveForce());
+        if (WheelGroundedCheck(rrWheel))
+        {
+            rb.AddForceAtPosition((transform.forward.normalized * GetDriveForce()) / 2, rrWheel.position);
+        }
         if (rb.velocity.magnitude >= 2.5f)
         {
             rb.angularVelocity += -transform.up * GetSteeringAngularAcceleration() * Time.fixedDeltaTime;
@@ -105,17 +118,19 @@ public class Car_Controller : MonoBehaviour
             }
         }
     }
+
+    public bool WheelGroundedCheck(Transform wheel)
+    {
+        CarSuspension.IsGrounded(wheel, out bool hasHit, out RaycastHit hit);
+        return hasHit;
+    }
     float GetSteeringAngularAcceleration()
     {
-        return -smoothedInput.x * maxAngularAcceleration * Mathf.PI / 180;
+        return -steerInput.x * maxAngularAcceleration * Mathf.PI / 180;
     }
     float GetDriveForce()
     {
         return steerInput.y * driveForce;
-    }
-    public bool WheelsGrounded()
-    {
-        return Physics.OverlapBox(groundTrigger.position, groundTrigger.localScale / 2, Quaternion.identity, wheelCollidables).Length > 0;
     }
     void CalculateAckermannAngle()
     {

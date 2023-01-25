@@ -64,16 +64,26 @@ public class Car_Suspension : MonoBehaviour
 
     float GetWheelDistanceFromRest(Transform wheel)
     {
-        RaycastHit hit;
-        float rayLength = maxDistance - minDistance;
-        Vector3 rayOrigin = (wheel.position - GetUpDir() * verticalOffset) - GetUpDir() * minDistance;
-        bool hasHit = Physics.Raycast(rayOrigin, -GetUpDir(), out hit, rayLength, roadLayer);
-        if (hasHit)
-        {
-            wheel.GetChild(0).transform.position = hit.point + (transform.up.normalized / 2);
-        }
+        IsGrounded(wheel, out bool hasHit, out RaycastHit hit);
+        
         float distanceFromRest = hasHit ? hit.distance + minDistance : 0;
         return distanceFromRest;
+    }
+
+    public void IsGrounded(Transform wheel, out bool hasHit, out RaycastHit hit)
+    {
+        float rayLength = maxDistance - minDistance;
+        Vector3 rayOrigin = (wheel.position - GetUpDir() * verticalOffset) - GetUpDir() * minDistance;
+        hasHit = Physics.Raycast(rayOrigin, -GetUpDir(), out hit, rayLength, roadLayer);
+        SetWheelVisualPosition(wheel, hit, hasHit);
+    }
+
+    void SetWheelVisualPosition(Transform wheel, RaycastHit hit, bool hasHit)
+    {
+        if (hasHit)
+        {
+            wheel.GetChild(0).transform.position = hit.point + (transform.up.normalized * 0.5f);
+        }
     }
 
     Vector3 GetUpDir()

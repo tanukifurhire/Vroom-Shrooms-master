@@ -13,6 +13,8 @@ public class Car_Gravity : MonoBehaviour
     [SerializeField] private Transform frWheel;
     [SerializeField] private Transform rlWheel;
     [SerializeField] private Transform rrWheel;
+    [SerializeField] private List<Transform> wheels = new List<Transform>();
+    private HashSet<Transform> liftedWheels = new HashSet<Transform>();
     // Start is called before the first frame update
     void Start()
     {
@@ -23,11 +25,11 @@ public class Car_Gravity : MonoBehaviour
     // Update is called once per frame
     void FixedUpdate()
     {
-        if (car.WheelsGrounded() || Vector3.Angle(Vector3.down, -transform.up.normalized) < maxAngle)
+        if (liftedWheels.Count < 2 || Vector3.Angle(Vector3.down, -transform.up.normalized) < maxAngle)
         {
             direction = -transform.up.normalized;
         }
-        else if (car.WheelsGrounded() || Vector3.Angle(Vector3.down, -transform.up.normalized) > maxAngle)
+        else if (liftedWheels.Count >= 2 || Vector3.Angle(Vector3.down, -transform.up.normalized) > maxAngle)
         {
             direction = Vector3.down;
         }
@@ -35,11 +37,33 @@ public class Car_Gravity : MonoBehaviour
         {
             direction = Vector3.down;
         }
-        
+
+        AddForceToLiftedWheels();
+
         rb.AddForceAtPosition(direction * acceleration * Time.fixedDeltaTime, flWheel.position, ForceMode.VelocityChange);
         rb.AddForceAtPosition(direction * acceleration * Time.fixedDeltaTime, frWheel.position, ForceMode.VelocityChange);
         rb.AddForceAtPosition(direction * acceleration * Time.fixedDeltaTime, rlWheel.position, ForceMode.VelocityChange);
         rb.AddForceAtPosition(direction * acceleration * Time.fixedDeltaTime, rrWheel.position, ForceMode.VelocityChange);
-        
+    }
+
+    void AddForceToLiftedWheels()
+    {
+        foreach (Transform w in wheels)
+        {
+            if (!car.WheelGroundedCheck(w) && !liftedWheels.Contains(w))
+            {
+                liftedWheels.Add(w);
+                Debug.Log(w.name + "Is Not Grounded!");
+            }
+            if (car.WheelGroundedCheck(w) && liftedWheels.Contains(w))
+            {
+                liftedWheels.Remove(w);
+            }
+        }
+
+        foreach (Transform w in liftedWheels)
+        {
+            rb.AddForceAtPosition(direction * acceleration * Time.fixedDeltaTime, w.position + transform.up, ForceMode.VelocityChange);
+        }
     }
 }
