@@ -103,11 +103,11 @@ public class Car_Controller : MonoBehaviour
     {
         if (WheelGroundedCheck(rlWheel))
         {
-            rb.AddForceAtPosition((transform.forward.normalized * GetDriveForce()) / 2, rlWheel.position);
+            rb.AddForce((transform.forward.normalized * GetDriveForce()) / 2);
         }
         if (WheelGroundedCheck(rrWheel))
         {
-            rb.AddForceAtPosition((transform.forward.normalized * GetDriveForce()) / 2, rrWheel.position);
+            rb.AddForce((transform.forward.normalized * GetDriveForce()) / 2);
         }
         if (rb.velocity.magnitude >= 2.5f)
         {

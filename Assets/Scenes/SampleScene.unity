@@ -483,9 +483,9 @@ MonoBehaviour:
   verticalOffset: -0.13
   maxDistance: 0.5
   minDistance: -2
-  springConstant: 250000
+  springConstant: 300000
   maxForce: 40000
-  dampingConstant: 25000
+  dampingConstant: 30000
   rb: {fileID: 401039566}
 --- !u!4 &401039571
 Transform:
